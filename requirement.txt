@@ -1,0 +1,12 @@
+notebook
+scikit-learn
+keras
+tensorflow==2.15
+torch
+wandb
+yfinace
+numpy
+pandas
+streamlit
+matplotlib
+plotly

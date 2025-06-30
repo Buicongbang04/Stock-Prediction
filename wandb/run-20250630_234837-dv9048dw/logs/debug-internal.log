@@ -1,0 +1,16 @@
+{"time":"2025-06-30T23:48:38.174438425+07:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/home/bangbui/Documents/Stock-Predict/wandb/run-20250630_234837-dv9048dw/logs/debug-core.log"}
+{"time":"2025-06-30T23:48:38.558523825+07:00","level":"INFO","msg":"stream: created new stream","id":"dv9048dw"}
+{"time":"2025-06-30T23:48:38.558547901+07:00","level":"INFO","msg":"stream: started","id":"dv9048dw"}
+{"time":"2025-06-30T23:48:38.558555308+07:00","level":"INFO","msg":"handler: started","stream_id":"dv9048dw"}
+{"time":"2025-06-30T23:48:38.558564851+07:00","level":"INFO","msg":"sender: started","stream_id":"dv9048dw"}
+{"time":"2025-06-30T23:48:38.558574779+07:00","level":"INFO","msg":"writer: Do: started","stream_id":"dv9048dw"}
+{"time":"2025-06-30T23:48:38.856004998+07:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-01T00:06:12.108751537+07:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-01T00:06:12.108785057+07:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-01T00:06:13.111888807+07:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading output.log","runtime_seconds":0.722793223,"progress":"140.1KB/140.1KB"},{"desc":"uploading model-best.h5","runtime_seconds":0.27222039,"progress":"1.1MB/2.1MB"}],"total_operations":2}}
+{"time":"2025-07-01T00:06:14.513698271+07:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-07-01T00:06:14.950130383+07:00","level":"INFO","msg":"stream: closing","id":"dv9048dw"}
+{"time":"2025-07-01T00:06:14.9501682+07:00","level":"INFO","msg":"handler: closed","stream_id":"dv9048dw"}
+{"time":"2025-07-01T00:06:14.950186195+07:00","level":"INFO","msg":"writer: Close: closed","stream_id":"dv9048dw"}
+{"time":"2025-07-01T00:06:14.950299594+07:00","level":"INFO","msg":"sender: closed","stream_id":"dv9048dw"}
+{"time":"2025-07-01T00:06:14.950370348+07:00","level":"INFO","msg":"stream: closed","id":"dv9048dw"}

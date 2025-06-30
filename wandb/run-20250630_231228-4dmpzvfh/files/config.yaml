@@ -1,0 +1,39 @@
+_wandb:
+    value:
+        cli_version: 0.20.1
+        m: []
+        python_version: 3.10.0
+        t:
+            "1":
+                - 2
+                - 3
+                - 5
+                - 53
+            "2":
+                - 2
+                - 3
+                - 5
+                - 53
+            "3":
+                - 2
+                - 3
+                - 8
+                - 13
+                - 16
+                - 55
+                - 62
+            "4": 3.10.0
+            "5": 0.20.1
+            "10":
+                - 9
+                - 17
+            "12": 0.20.1
+            "13": linux-x86_64
+batch_size:
+    value: 64
+epochs:
+    value: 100
+num_features:
+    value: 1
+window_size:
+    value: 10

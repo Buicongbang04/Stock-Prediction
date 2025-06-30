@@ -1,0 +1,16 @@
+{"time":"2025-06-30T23:12:28.804071565+07:00","level":"INFO","msg":"stream: starting","core version":"0.20.1","symlink path":"/home/bangbui/Documents/Stock-Predict/wandb/run-20250630_231228-4dmpzvfh/logs/debug-core.log"}
+{"time":"2025-06-30T23:12:29.300192636+07:00","level":"INFO","msg":"stream: created new stream","id":"4dmpzvfh"}
+{"time":"2025-06-30T23:12:29.300218793+07:00","level":"INFO","msg":"stream: started","id":"4dmpzvfh"}
+{"time":"2025-06-30T23:12:29.300267938+07:00","level":"INFO","msg":"handler: started","stream_id":"4dmpzvfh"}
+{"time":"2025-06-30T23:12:29.300263341+07:00","level":"INFO","msg":"writer: Do: started","stream_id":"4dmpzvfh"}
+{"time":"2025-06-30T23:12:29.300287891+07:00","level":"INFO","msg":"sender: started","stream_id":"4dmpzvfh"}
+{"time":"2025-06-30T23:12:29.712681848+07:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-06-30T23:14:37.668094167+07:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-06-30T23:14:37.66813326+07:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-06-30T23:14:38.669630171+07:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading config.yaml","runtime_seconds":0.446143715,"progress":"726B/726B"}],"total_operations":1}}
+{"time":"2025-06-30T23:14:38.987864896+07:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-06-30T23:14:39.352133335+07:00","level":"INFO","msg":"stream: closing","id":"4dmpzvfh"}
+{"time":"2025-06-30T23:14:39.352142263+07:00","level":"INFO","msg":"handler: closed","stream_id":"4dmpzvfh"}
+{"time":"2025-06-30T23:14:39.352147205+07:00","level":"INFO","msg":"writer: Close: closed","stream_id":"4dmpzvfh"}
+{"time":"2025-06-30T23:14:39.352150217+07:00","level":"INFO","msg":"sender: closed","stream_id":"4dmpzvfh"}
+{"time":"2025-06-30T23:14:39.352187431+07:00","level":"INFO","msg":"stream: closed","id":"4dmpzvfh"}
