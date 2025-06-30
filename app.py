@@ -34,10 +34,12 @@ if st.button("Dự đoán"):
     else:
         data_desc = df.describe()
         # --- Tính toán EMA
-        ema20 = df.Close.ewm(span=20, adjust=False).mean()
-        ema50 = df.Close.ewm(span=50, adjust=False).mean()
-        ema100 = df.Close.ewm(span=100, adjust=False).mean()
-        ema200 = df.Close.ewm(span=200, adjust=False).mean()
+        # ema20 = df.Close.ewm(span=20, adjust=False).mean()
+        # ema50 = df.Close.ewm(span=50, adjust=False).mean()
+        # ema100 = df.Close.ewm(span=100, adjust=False).mean()
+        # ema200 = df.Close.ewm(span=200, adjust=False).mean()
+
+
         # --- Chia tập train/test
         data_training = pd.DataFrame(df['Close'][0:int(len(df)*0.70)])
         data_testing = pd.DataFrame(df['Close'][int(len(df)*0.70): int(len(df))])
@@ -60,42 +62,43 @@ if st.button("Dự đoán"):
         scale_factor = 1 / scaler_[0]
         y_predicted = y_predicted * scale_factor
         y_test = y_test * scale_factor
-        # --- Vẽ EMA 20 & 50
-        fig1, ax1 = plt.subplots(figsize=(12, 6))
-        ax1.plot(df.Close, 'y', label='Closing Price')
-        ax1.plot(ema20, 'g', label='EMA 20')
-        ax1.plot(ema50, 'r', label='EMA 50')
-        ax1.set_title("Closing Price vs Time (20 & 50 Days EMA)")
-        ax1.set_xlabel("Time")
-        ax1.set_ylabel("Price")
-        ax1.legend()
-        ema_chart_path = "static/ema_20_50_streamlit.png"
-        fig1.savefig(ema_chart_path)
-        st.pyplot(fig1)
-        st.download_button(
-            label="Tải xuống biểu đồ EMA 20 & 50",
-            data=open(ema_chart_path, "rb").read(),
-            file_name="ema_20_50.png"
-        )
-        plt.close(fig1)
-        # --- Vẽ EMA 100 & 200
-        fig2, ax2 = plt.subplots(figsize=(12, 6))
-        ax2.plot(df.Close, 'y', label='Closing Price')
-        ax2.plot(ema100, 'g', label='EMA 100')
-        ax2.plot(ema200, 'r', label='EMA 200')
-        ax2.set_title("Closing Price vs Time (100 & 200 Days EMA)")
-        ax2.set_xlabel("Time")
-        ax2.set_ylabel("Price")
-        ax2.legend()
-        ema_chart_path_100_200 = "static/ema_100_200_streamlit.png"
-        fig2.savefig(ema_chart_path_100_200)
-        st.pyplot(fig2)
-        st.download_button(
-            label="Tải xuống biểu đồ EMA 100 & 200",
-            data=open(ema_chart_path_100_200, "rb").read(),
-            file_name="ema_100_200.png"
-        )
-        plt.close(fig2)
+        # # --- Vẽ EMA 20 & 50
+        # fig1, ax1 = plt.subplots(figsize=(12, 6))
+        # ax1.plot(df.Close, 'y', label='Closing Price')
+        # ax1.plot(ema20, 'g', label='EMA 20')
+        # ax1.plot(ema50, 'r', label='EMA 50')
+        # ax1.set_title("Closing Price vs Time (20 & 50 Days EMA)")
+        # ax1.set_xlabel("Time")
+        # ax1.set_ylabel("Price")
+        # ax1.legend()
+        # ema_chart_path = "static/ema_20_50_streamlit.png"
+        # fig1.savefig(ema_chart_path)
+        # st.pyplot(fig1)
+        # st.download_button(
+        #     label="Tải xuống biểu đồ EMA 20 & 50",
+        #     data=open(ema_chart_path, "rb").read(),
+        #     file_name="ema_20_50.png"
+        # )
+        # plt.close(fig1)
+        # # --- Vẽ EMA 100 & 200
+        # fig2, ax2 = plt.subplots(figsize=(12, 6))
+        # ax2.plot(df.Close, 'y', label='Closing Price')
+        # ax2.plot(ema100, 'g', label='EMA 100')
+        # ax2.plot(ema200, 'r', label='EMA 200')
+        # ax2.set_title("Closing Price vs Time (100 & 200 Days EMA)")
+        # ax2.set_xlabel("Time")
+        # ax2.set_ylabel("Price")
+        # ax2.legend()
+        # ema_chart_path_100_200 = "static/ema_100_200_streamlit.png"
+        # fig2.savefig(ema_chart_path_100_200)
+        # st.pyplot(fig2)
+        # st.download_button(
+        #     label="Tải xuống biểu đồ EMA 100 & 200",
+        #     data=open(ema_chart_path_100_200, "rb").read(),
+        #     file_name="ema_100_200.png"
+        # )
+        # plt.close(fig2)
+
         # --- Vẽ Predictions
         fig3, ax3 = plt.subplots(figsize=(12, 6))
         ax3.plot(y_test, 'g', label="Original Price", linewidth=1)
