@@ -20,11 +20,11 @@ if not os.path.exists("static"):
 
 # --- Nhập mã cổ phiếu
 stock = st.text_input('Nhập mã cổ phiếu (ví dụ: POWERGRID.NS, AAPL):', value='POWERGRID.NS')
-start = dt.datetime(2025, 1, 1)
+start = dt.datetime(2024, 1, 1)
 end = dt.datetime(2025, 7, 1)
 
-# --- window size phù hợp input_shape=(10,1)
-window_size = 10
+# --- window size phù hợp input_shape=(100,1)
+window_size = 100
 
 if st.button("Dự đoán"):
     # --- Lấy dữ liệu cổ phiếu
@@ -55,13 +55,14 @@ if st.button("Dự đoán"):
             y_test.append(input_data[i, 0])
         x_test, y_test = np.array(x_test), np.array(y_test)
         # --- Load model và dự đoán
-        model = load_model('weight/stacked_lstm/model_AAPL.h5')
+        model = load_model('weight/stacked_lstm/stock_dl_model.h5')
         y_predicted = model.predict(x_test)
         # Inverse scaling
         scaler_ = scaler.scale_
         scale_factor = 1 / scaler_[0]
         y_predicted = y_predicted * scale_factor
         y_test = y_test * scale_factor
+
         # # --- Vẽ EMA 20 & 50
         # fig1, ax1 = plt.subplots(figsize=(12, 6))
         # ax1.plot(df.Close, 'y', label='Closing Price')

@@ -25,8 +25,12 @@ def train_stacked_lstm(window_size,
                     valset=None,
                     testset=None):
     
+    print("Model Summary:")
+    print(StackedLSTM(window_size, num_features).summary())
     
-    wandb.init(project='DAT',
+
+    for i in stockList:
+        wandb.init(project='DAT',
                 name="final",
                 config={
                     "window_size": window_size,
@@ -34,46 +38,45 @@ def train_stacked_lstm(window_size,
                     "epochs": epochs,
                     "batch_size": batch_size
                 })
-    model = StackedLSTM(window_size, num_features)
-    model.summary()
+        
+        model = StackedLSTM(window_size, num_features)
 
-    for i in stockList:
         print("Fitting to", i)
         model.fit(trainset[i]["X"], trainset[i]["y"], 
                 epochs=epochs, batch_size=batch_size, 
                 validation_data=(valset[i]["X"], valset[i]["y"]), 
                 callbacks=[WandbCallback()])
     
-    sh.copy("wandb/latest-run/files/model-best.h5", 
-                "weight/stacked_lstm/final.h5")
-        
-    wandb.finish()
+        sh.copy("wandb/latest-run/files/model-best.h5", 
+                "weight/stacked_lstm/model_" + i + ".h5")
 
-    model = load_model('weight/stacked_lstm/final.h5')
+        wandb.finish()
 
-    for i in stockList:
-        scaler = joblib.load("weight/stacked_lstm/scaler_" + i + ".pkl")
 
-        y_pred_scaled = model.predict(testset[i]["X"])
-        y_pred = scaler.inverse_transform(np.concatenate([y_pred_scaled, np.zeros((y_pred_scaled.shape[0], trainset[i]["X"].shape[1]-1))], axis=1))[:,0]
-        y_true = scaler.inverse_transform(np.concatenate([testset[i]["y"].reshape(-1,1), np.zeros((testset[i]["y"].shape[0], trainset[i]["X"].shape[1]-1))], axis=1))[:,0]
-        mae = mean_absolute_error(y_true, y_pred)
-        rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-        print(f"MAE: {mae:.4f}")
-        print(f"RMSE: {rmse:.4f}")
+        for i in stockList:
+            model = load_model('weight/stacked_lstm/model_' + i + '.h5')
+            scaler = joblib.load("weight/stacked_lstm/scaler_" + i + ".pkl")
 
-        plt.figure(figsize=(12, 6))
-        plt.plot(y_true, label='Actual')
-        plt.plot(y_pred, label='Predicted')
-        plt.legend()
-        plt.title('Model prediction on test data')
-        plt.savefig(f"output/stacked_lstm/final_plot({i}).png", dpi=300)
+            y_pred_scaled = model.predict(testset[i]["X"])
+            y_pred = scaler.inverse_transform(np.concatenate([y_pred_scaled, np.zeros((y_pred_scaled.shape[0], trainset[i]["X"].shape[1]-1))], axis=1))[:,0]
+            y_true = scaler.inverse_transform(np.concatenate([testset[i]["y"].reshape(-1,1), np.zeros((testset[i]["y"].shape[0], trainset[i]["X"].shape[1]-1))], axis=1))[:,0]
+            mae = mean_absolute_error(y_true, y_pred)
+            rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+            print(f"MAE: {mae:.4f}")
+            print(f"RMSE: {rmse:.4f}")
+
+            plt.figure(figsize=(12, 6))
+            plt.plot(y_true, label='Actual')
+            plt.plot(y_pred, label='Predicted')
+            plt.legend()
+            plt.title('Model prediction on test data')
+            plt.savefig(f"output/stacked_lstm/final_plot({i}).png", dpi=300)
 
 
     return model
 
 
-def data_loader(path, stockList):
+def data_loader(path, stockList, window_size):
     
     df_ = {}
     for i in stockList:
@@ -119,8 +122,8 @@ def data_loader(path, stockList):
         trainset[j] = {}
         X_train = []
         y_train = []
-        for i in range(10,3014):
-            X_train.append(transform_train[j][i-10:i,0])
+        for i in range(window_size,3014):
+            X_train.append(transform_train[j][i-window_size:i,0])
             y_train.append(transform_train[j][i,0])
         X_train, y_train = np.array(X_train), np.array(y_train)
         trainset[j]["X"] = np.reshape(X_train, (X_train.shape[0],X_train.shape[1],1))
@@ -129,8 +132,8 @@ def data_loader(path, stockList):
         testset[j] = {}
         X_test = []
         y_test = []
-        for i in range(10, 121):
-            X_test.append(transform_test[j][i-10:i,0])
+        for i in range(window_size, 121):
+            X_test.append(transform_test[j][i-window_size:i,0])
             y_test.append(transform_test[j][i,0])
         X_test, y_test = np.array(X_test), np.array(y_test)
         testset[j]["X"] = np.reshape(X_test, (X_test.shape[0], X_train.shape[1], 1))
@@ -139,8 +142,8 @@ def data_loader(path, stockList):
         valset[j] = {}
         X_val = []
         y_val = []
-        for i in range(10, 251):
-            X_val.append(transform_val[j][i-10:i,0])
+        for i in range(window_size, 251):
+            X_val.append(transform_val[j][i-window_size:i,0])
             y_val.append(transform_val[j][i,0])
         X_val, y_val = np.array(X_val), np.array(y_val)
         valset[j]["X"] = np.reshape(X_val, (X_val.shape[0], X_train.shape[1], 1))
@@ -166,11 +169,11 @@ if __name__ == "__main__":
     path = "data/"
     stockList = ['AMZN', 'NVDA','AAPL','BIDU','GOOG','INTC','MSFT','NFLX','TCEHY','TSLA']
 
-    trainset, valset, testset = data_loader(path, stockList)
-
-    window_size = 10
+    window_size = 24
     num_features = 1
-    
+
+    trainset, valset, testset = data_loader(path, stockList, window_size)
+
     model = train_stacked_lstm(window_size, 
                             num_features, 
                             trainset, 

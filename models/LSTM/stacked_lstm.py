@@ -1,13 +1,14 @@
 from keras.models import Sequential
 from keras.layers import LSTM, Dense, Dropout
+from keras.models import load_model
 import warnings
 warnings.filterwarnings("ignore")
 
 class StackedLSTM:
     def __init__(self, window_size, num_features, 
                 lstm_units=[50, 60, 80, 120], 
-                dropout_rate=[0.2, 0.3, 0.4, 0.5], 
-                loss='mae', optimizer='adam'): 
+                dropout_rate=[0.3, 0.3, 0.3, 0.3], 
+                loss='mse', optimizer='adam'): 
         self.window_size = window_size
         self.num_features = num_features
         self.lstm_units = lstm_units
@@ -43,7 +44,7 @@ class StackedLSTM:
         model.compile(optimizer=self.optimizer, loss=self.loss)
         return model
     
-    def fit(self, X_train, y_train, epochs=100, batch_size=32, validation_data=None, verbose=1, **kwargs):
+    def fit(self, X_train, y_train, epochs=100, batch_size=64, validation_data=None, verbose=1, **kwargs):
         return self.model.fit(
             X_train, y_train, 
             epochs=epochs, 
@@ -63,5 +64,4 @@ class StackedLSTM:
         self.model.save(filepath)
         
     def load(self, filepath):
-        from keras.models import load_model
         self.model = load_model(filepath)
