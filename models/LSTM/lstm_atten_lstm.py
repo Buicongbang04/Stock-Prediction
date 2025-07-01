@@ -4,65 +4,59 @@ import torch.nn.functional as F
 
 class Attention(nn.Module):
     def __init__(self, hidden_dim):
-        super(Attention, self).__init__()
+        super().__init__()
         self.attn = nn.Linear(hidden_dim * 2, hidden_dim)
-        self.v = nn.Parameter(torch.rand(hidden_dim))
-
-    def forward(self, encoder_outputs, decoder_hidden):
-        # encoder_outputs: [batch_size, seq_len, hidden_dim]
-        # decoder_hidden: [batch_size, hidden_dim]
-        seq_len = encoder_outputs.size(1)
-
-        decoder_hidden = decoder_hidden.unsqueeze(1).repeat(1, seq_len, 1)
-        energy = torch.tanh(self.attn(torch.cat((encoder_outputs, decoder_hidden), dim=2)))
-        energy = energy.permute(0, 2, 1)
-        v = self.v.repeat(encoder_outputs.size(0), 1).unsqueeze(1)
-
-        attention_weights = torch.bmm(v, energy).squeeze(1)
-        return F.softmax(attention_weights, dim=1)
-
+        self.v = nn.Linear(hidden_dim, 1)
+    
+    def forward(self, hidden, encoder_outputs):
+        hidden = hidden.unsqueeze(1)
+        hidden = hidden.expand(-1, encoder_outputs.size(1), -1)
+        energy = torch.tanh(self.attn(torch.cat((hidden, encoder_outputs), dim=2)))
+        attention = self.v(energy).squeeze(2)
+        return F.softmax(attention, dim=1)
 
 class LSTM_Attention_LSTM(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim, num_layers=1, dropout=0.3):
-        super(LSTM_Attention_LSTM, self).__init__()
-        self.hidden_dim = hidden_dim
-
-        # Encoder
-        self.encoder = nn.LSTM(input_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout)
-
-        # Attention
+    def __init__(self, input_dim, hidden_dim=100, output_dim=1, dropout_rate=0.3):
+        super().__init__()
+        self.encoder = nn.LSTM(input_dim, hidden_dim, batch_first=True)
+        self.decoder = nn.LSTM(hidden_dim, hidden_dim, batch_first=True)
         self.attention = Attention(hidden_dim)
-
-        # Decoder
-        self.decoder = nn.LSTM(hidden_dim, hidden_dim, num_layers, batch_first=True, dropout=dropout)
-        self.fc_out = nn.Linear(hidden_dim, output_dim)
-
-    def forward(self, x):
-        # x: [batch_size, seq_len, input_dim]
-        encoder_outputs, (hidden, cell) = self.encoder(x)
-        decoder_input = encoder_outputs[:, -1:, :]  # last output as initial input for decoder
-
-        all_outputs = []
-        seq_len = x.size(1)
-
-        for _ in range(seq_len):
-            # Calculate attention
-            attn_weights = self.attention(encoder_outputs, hidden[-1])
-            attn_applied = torch.bmm(attn_weights.unsqueeze(1), encoder_outputs)
-
-            # Decode
-            decoder_output, (hidden, cell) = self.decoder(attn_applied, (hidden, cell))
-            output = self.fc_out(decoder_output)
-            all_outputs.append(output)
-
-        outputs = torch.cat(all_outputs, dim=1)
-        return outputs
-
-    def predict(self, x):
-        self.eval()
-        with torch.no_grad():
-            outputs = self.forward(x)
-        return outputs
+        self.fc = nn.Linear(hidden_dim, output_dim)
+        self.dropout = nn.Dropout(dropout_rate)
+        self.output_to_hidden = nn.Linear(output_dim, hidden_dim)
     
-    def save(self, filepath):
-        torch.save(self.state_dict(), filepath)
+    def forward(self, x):
+        if x.dim() == 2:  # [batch, time_steps]
+            x = x.unsqueeze(-1)  # → [batch, time_steps, 1]
+
+        encoder_outputs, (hidden, cell) = self.encoder(x)
+
+        hidden = hidden.permute(1, 0, 2)
+        cell = cell.permute(1, 0, 2)
+        
+        # Chuẩn bị đầu vào cho decoder
+        decoder_input = torch.zeros(x.size(0), 1, hidden.size(-1)).to(x.device)
+        outputs = []
+        
+        for t in range(x.size(1)):  # Duyệt qua từng bước thời gian
+            decoder_output, (hidden, cell) = self.decoder(
+                decoder_input, 
+                (hidden.permute(1, 0, 2), cell.permute(1, 0, 2))
+            )
+            # attention
+            last_hidden = hidden.permute(1, 0, 2)[:, -1, :] 
+            attn_weights = self.attention(last_hidden, encoder_outputs)
+            context = torch.bmm(attn_weights.unsqueeze(1), encoder_outputs).squeeze(1)
+
+            hidden = hidden.permute(1, 0, 2)
+            cell = cell.permute(1, 0, 2)
+
+            # predict
+            output = self.fc(context)
+            outputs.append(output)
+
+            # update
+            decoder_input = self.output_to_hidden(output).unsqueeze(1)
+        
+        return torch.stack(outputs, dim=1)
+    
