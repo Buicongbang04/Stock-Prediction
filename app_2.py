@@ -1,3 +1,4 @@
+import joblib
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -21,14 +22,11 @@ plt_style = "plotly_dark"  # Consistent theme for all figures
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 WINDOW_SIZE = 24
-WEIGHT_DIR = "weight/lstm_atten_lstm"  # folder chứa <TICKER>_best.pt đã train
+WEIGHT_DIR = "weight/lstm_atten_lstm"
 SUPPORTED_TICKERS = [
     "AMZN", "NVDA", "AAPL", "BIDU", "GOOG", "INTC", "MSFT", "NFLX", "TCEHY", "TSLA",
 ]
 
-# ------------------------------
-# Helper functions
-# ------------------------------
 @st.cache_resource(show_spinner=False)
 def load_trained_model(ticker: str):
     weight_path = os.path.join(WEIGHT_DIR, f"{ticker}_best.pt")
@@ -42,6 +40,15 @@ def load_trained_model(ticker: str):
     model.eval()
     return model
 
+@st.cache_resource(show_spinner=False)
+def load_scaler(ticker: str):
+    weight_path = os.path.join(WEIGHT_DIR, f"scaler_{ticker}.pkl")
+    if not os.path.isfile(weight_path):
+        raise FileNotFoundError(
+            f"Không tìm thấy file weight {weight_path}. Hãy chắc chắn đã train và lưu mô hình."  # noqa
+        )
+
+    return joblib.load(weight_path)
 
 def calculate_ema(df: pd.DataFrame) -> Dict[str, pd.Series]:
     ema20 = df["Close"].ewm(span=20, adjust=False).mean()
@@ -49,7 +56,6 @@ def calculate_ema(df: pd.DataFrame) -> Dict[str, pd.Series]:
     ema100 = df["Close"].ewm(span=100, adjust=False).mean()
     ema200 = df["Close"].ewm(span=200, adjust=False).mean()
     return ema20, ema50, ema100, ema200
-
 
 def plot_ema(df: pd.DataFrame, 
             ema20: pd.Series=None, 
@@ -88,7 +94,7 @@ def plot_ema(df: pd.DataFrame,
 def plot_prediction(pred_dates, y_true: np.ndarray, y_pred: np.ndarray):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=pred_dates, y=y_true, name="Actual", mode="lines", line=dict(color="cyan")))
-    fig.add_trace(go.Scatter(x=pred_dates, y=y_pred, name="Predicted", mode="lines", line=dict(color="magenta")))
+    fig.add_trace(go.Scatter(x=pred_dates + pd.DateOffset(hours=1), y=y_pred, name="Predicted", mode="lines", line=dict(color="magenta")))
     fig.update_layout(title="Prediction vs Actual", xaxis_title="Time Step", yaxis_title="Price", template=plt_style, height=500)
     return fig
 
@@ -110,13 +116,13 @@ if run_button:
     # Load model
     try:
         model = load_trained_model(ticker)
+        scaler = load_scaler(ticker)
     except FileNotFoundError as e:
         st.error(str(e))
         st.stop()
 
     st.info("Đang tải dữ liệu từ Yahoo Finance…")
-    effective_end_date = min(end_date, dt.date.today() - relativedelta(days=1))
-    raw = yf.download(ticker, start=start_date, end=effective_end_date, interval="1d", progress=False)
+    raw = yf.download(ticker, start=start_date, end=end_date, interval="1h", progress=False)
     if raw.empty:
         st.error("Không có dữ liệu cho khoảng thời gian đã chọn.")
         st.stop()
@@ -135,23 +141,21 @@ if run_button:
     ema20, ema50, ema100, ema200 = calculate_ema(df)
 
     # Chuẩn bị dữ liệu cho mô hình
+    # Lấy toàn bộ data download để dự đoán
     data = df["Close"].values.reshape(-1, 1)
-    train_size = int(len(data) * 0.7)
-    train_data = data[:train_size]
-
-    scaler = MinMaxScaler((0, 1))
-    scaler.fit(train_data)
-
-    sequence_data = np.vstack([train_data[-WINDOW_SIZE:], data[train_size:]])
-    scaled_seq = scaler.transform(sequence_data)
+    scaler.fit(data)
+    scaled_seq = scaler.transform(data)
 
     X_test, y_true_scaled = [], []
     for i in range(WINDOW_SIZE, len(scaled_seq)):
         X_test.append(scaled_seq[i - WINDOW_SIZE : i])
         y_true_scaled.append(scaled_seq[i, 0])
-
+    X_test.append(scaled_seq[-WINDOW_SIZE:])
     X_test = np.asarray(X_test, dtype=np.float32)
     y_true_scaled = np.asarray(y_true_scaled, dtype=np.float32)
+    
+    print(y_true_scaled[-1:])
+    print(X_test[-2:])
 
     # Dự đoán
     st.info("Đang dự đoán…")
@@ -176,7 +180,7 @@ if run_button:
         st.plotly_chart(fig_long, use_container_width=True)
 
     with col_right:
-        pred_dates = df.index[train_size:]
+        pred_dates = df.index[WINDOW_SIZE:]
         st.subheader("Actual vs Predicted")
         fig_pred = plot_prediction(pred_dates,y_true, y_pred)
         st.plotly_chart(fig_pred, use_container_width=True)
