@@ -15,6 +15,14 @@ from tqdm import tqdm
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 CKPT_DIR = "weight/lstm_atten_lstm/"
 
+def mean_directional_accuracy(y_true, y_pred):
+    diff_true = np.diff(y_true)
+    diff_pred = np.diff(y_pred)
+    return np.mean((np.sign(diff_true) == np.sign(diff_pred)).astype(np.float32))
+
+def wmape(y_true, y_pred):
+    return np.sum(np.abs(y_true - y_pred)) / np.sum(np.abs(y_true))
+
 def create_dataloader(path, stockList, window_size=10, batch_size=32):
     """
     Create DataLoader for time series data.
@@ -175,15 +183,36 @@ def train_model(model, stock, dataloader, criterion, optimizer, window_size, num
         model.eval()
         with torch.no_grad():
             val_loss = 0.0
+            y_val_pred = []
+            y_val_true = []
             for inputs, targets in dataloader['val']:
                 inputs, targets = inputs.to(DEVICE), targets.to(DEVICE)
 
                 outputs = model(inputs)[:, -1, 0]
                 loss = criterion(outputs, targets)
                 val_loss += loss.item()
+                y_val_pred.append(outputs.cpu().numpy())
+                y_val_true.append(targets.cpu().numpy())
+
             val_loss /= len(dataloader['val'])
+            y_val_pred = np.concatenate(y_val_pred, axis=0)
+            y_val_true = np.concatenate(y_val_true, axis=0)
+            scaler = joblib.load(f"weight/lstm_atten_lstm/scaler_{stock}.pkl")
+            y_val_pred_scaled = scaler.inverse_transform(y_val_pred.reshape(-1, 1)).flatten()
+            y_val_true_scaled = scaler.inverse_transform(y_val_true.reshape(-1, 1)).flatten()
+            val_mda = mean_directional_accuracy(y_val_true_scaled, y_val_pred_scaled)
+            val_wmape = wmape(y_val_true_scaled, y_val_pred_scaled)
+
             print(f'Validation Loss: {val_loss:.4f}')
-            wandb.log({"epoch": epoch + 1, "loss": loss.item(), "val_loss": val_loss})
+            print(f'Validation MDA: {val_mda:.4f}')
+            print(f'Validation WMAPE: {val_wmape:.4f}')
+
+            wandb.log({"epoch": epoch + 1, 
+                    "loss": loss.item(), 
+                    "val_loss": val_loss,
+                    "val_MDA": val_mda,
+                    "val_WMAPE": val_wmape
+                })
             if val_loss < best_val:
                 best_val = val_loss
                 torch.save(model.state_dict(), best_path)
