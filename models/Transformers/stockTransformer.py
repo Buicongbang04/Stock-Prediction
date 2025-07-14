@@ -5,7 +5,6 @@ import torch.nn.functional as F
 class CNNEmbedding(nn.Module):
     def __init__(self, input_dim, embed_dim, kernel_size=3):
         super(CNNEmbedding, self).__init__()
-        # 1D convolution (sử dụng padding circular)
         self.conv1d = nn.Conv1d(in_channels=input_dim,
                                 out_channels=embed_dim,
                                 kernel_size=kernel_size,
