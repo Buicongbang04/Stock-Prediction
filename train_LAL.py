@@ -144,7 +144,7 @@ def train_model(model, stock, dataloader, criterion, optimizer, window_size, num
     Returns:
     - None
     """
-    wandb.init(project='DAT',
+    wandb.init(project='LSTM_Attention_LSTM',
                 name="LAL_" + str(stock),
                 config={
                     "window_size": window_size,
@@ -248,7 +248,6 @@ if __name__ == "__main__":
     num_features = 1
 
     dataloaders = create_dataloader(path, stockList, window_size, batch_size)
-    
 
     for stock in stockList:
         model = LSTM_Attention_LSTM(input_dim=num_features, hidden_dim=100, output_dim=1).to(DEVICE)
